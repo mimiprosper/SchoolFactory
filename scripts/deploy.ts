@@ -1,27 +1,37 @@
-import { ethers } from "hardhat";
+// SPDX-License-Identifier: MIT
+const { ethers } = require("hardhat");
 
 async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = currentTimestampInSeconds + 60;
+  const [deployer] = await ethers.getSigners();
 
-  const lockedAmount = ethers.parseEther("0.001");
+  console.log("Deploying contracts with the account:", deployer.address);
 
-  const lock = await ethers.deployContract("Lock", [unlockTime], {
-    value: lockedAmount,
-  });
-
-  await lock.waitForDeployment();
+  const StudentRegistryFactory = await ethers.getContractFactory(
+    "StudentRegistryFactory"
+  );
+  const studentRegistryFactory = await StudentRegistryFactory.deploy();
 
   console.log(
-    `Lock with ${ethers.formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.target}`
+    "StudentRegistryFactory address:",
+    studentRegistryFactory.address
   );
+
+  // Optionally, you can call functions on the deployed contract
+  // For example, let's call createStudentRegistry() after deployment
+  await studentRegistryFactory.createStudentRegistry();
+  const deployedRegistriesCount =
+    await studentRegistryFactory.getDeployedRegistriesCount();
+  console.log(
+    "Number of deployed registries:",
+    deployedRegistriesCount.toString()
+  );
+
+  console.log("Done!");
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+main()
+  .then(() => process.exit(0))
+  .catch((error) => {
+    console.error(error);
+    process.exit(1);
+  });
